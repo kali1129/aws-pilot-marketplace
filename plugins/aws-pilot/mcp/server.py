@@ -26,6 +26,7 @@ from botocore.exceptions import (
     NoCredentialsError,
     EndpointConnectionError,
     PartialCredentialsError,
+    ProfileNotFound,
     BotoCoreError,
 )
 from mcp.server.fastmcp import FastMCP
@@ -63,14 +64,47 @@ _session = None
 _clients: dict = {}
 
 
+def _list_profiles() -> list:
+    """Return available profile names, or [] if AWS config can't be read."""
+    try:
+        return list(boto3.Session().available_profiles)
+    except Exception:
+        return []
+
+
+def _has_env_creds() -> bool:
+    return bool(os.environ.get("AWS_ACCESS_KEY_ID"))
+
+
+def _creds_problem() -> str | None:
+    """Return None if creds look usable, else a clear setup message."""
+    if PROFILE in _list_profiles():
+        return None
+    if _has_env_creds():
+        return None  # env vars supersede profile
+    return (
+        f"No AWS credentials available for profile '{PROFILE}'.\n"
+        f"Setup:\n"
+        f"  1. aws configure --profile {PROFILE}\n"
+        f"  2. /plugin config aws-pilot aws_profile={PROFILE}\n"
+        f"Or set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars before launching Claude."
+    )
+
+
 def session():
+    """Build a boto3 session. Caller must ensure creds are available (use _creds_problem first)."""
     global _session
     if _session is None:
-        try:
+        if PROFILE in _list_profiles():
             _session = boto3.Session(profile_name=PROFILE, region_name=REGION)
-        except Exception:
-            # Profile may not exist; return a default-creds session, errors surface at API call
-            _session = boto3.Session(region_name=REGION)
+        else:
+            # No matching profile — temporarily strip AWS_PROFILE env so boto3 doesn't auto-pick it
+            saved = os.environ.pop("AWS_PROFILE", None)
+            try:
+                _session = boto3.Session(region_name=REGION)
+            finally:
+                if saved is not None:
+                    os.environ["AWS_PROFILE"] = saved
     return _session
 
 
@@ -125,10 +159,17 @@ def gate(action: str) -> str | None:
 
 
 def safe_tool(action_label: str):
-    """Decorator: catch boto/MCP errors and return structured error dicts."""
+    """Decorator: pre-check creds, then catch boto/MCP errors and return structured error dicts."""
     def decorator(fn):
         @functools.wraps(fn)
         def wrapper(*args, **kwargs):
+            # Pre-check: bail early with helpful message if no creds.
+            # (`aws_audit_log_tail` is the only tool that doesn't touch AWS — let it through.)
+            if action_label != "aws_audit_log_tail":
+                problem = _creds_problem()
+                if problem:
+                    audit(action_label, kwargs, problem, False)
+                    return {"error": problem, "kind": "no_credentials"}
             try:
                 result = fn(*args, **kwargs)
                 if isinstance(result, dict) and "error" in result:
@@ -136,10 +177,12 @@ def safe_tool(action_label: str):
                 else:
                     audit(action_label, kwargs, "ok", True)
                 return result
-            except NoCredentialsError:
+            except (NoCredentialsError, ProfileNotFound) as e:
                 msg = (
-                    f"No AWS credentials configured. Run 'aws configure --profile {PROFILE}' "
-                    f"or set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars."
+                    f"No AWS credentials available for profile '{PROFILE}'. "
+                    f"Set up by running: aws configure --profile {PROFILE}\n"
+                    f"Then in Claude: /plugin config aws-pilot aws_profile={PROFILE}\n"
+                    f"(detail: {e})"
                 )
                 audit(action_label, kwargs, msg, False)
                 return {"error": msg, "kind": "no_credentials"}
