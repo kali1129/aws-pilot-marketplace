@@ -9,31 +9,35 @@
   "license": "MIT",
   "keywords": ["aws", "bug-bounty", "pentest", "iam-enum", "s3-recon", "boto3", "pacu"],
   "skills": "./skills",
-  "agents": "./agents",
   "hooks": "./hooks/hooks.json",
   "userConfig": {
     "aws_profile": {
       "type": "string",
+      "title": "AWS CLI profile",
       "description": "AWS CLI profile with the target program's authorized credentials.",
       "default": "default"
     },
     "scope_file": {
       "type": "file",
+      "title": "Scope file",
       "description": "Path to a file listing in-scope AWS account IDs / ARN patterns. The toolkit refuses to enumerate anything outside this file.",
       "default": ""
     },
     "throttle_seconds": {
       "type": "number",
+      "title": "Throttle (seconds)",
       "description": "Minimum seconds between AWS API calls (avoid CloudTrail anomaly detection).",
       "default": 3
     },
     "max_calls_per_session": {
       "type": "number",
+      "title": "Max calls per session",
       "description": "Hard cap on AWS calls per session.",
       "default": 200
     },
     "findings_log": {
       "type": "string",
+      "title": "Findings log path",
       "description": "JSONL findings log path.",
       "default": "${CLAUDE_PLUGIN_DATA}/findings.jsonl"
     }

@@ -1,6 +1,6 @@
 ---
 name: aws-vpc-network
-description: Manage VPC, subnets, security groups, route tables, internet gateways. Use when user wants "private networking", "isolate my DB", "create a VPC", or asks about firewall rules. Sensible defaults: default VPC fine for hobby; new VPC only for production multi-tier.
+description: 'Manage VPC, subnets, security groups, route tables, internet gateways. Use when user wants "private networking", "isolate my DB", "create a VPC", or asks about firewall rules. Sensible defaults — default VPC fine for hobby, new VPC only for production multi-tier.'
 ---
 
 # aws-vpc-network

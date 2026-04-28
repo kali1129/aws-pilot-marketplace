@@ -11,48 +11,55 @@
   "license": "MIT",
   "keywords": ["aws", "cloud", "ec2", "s3", "lambda", "iam", "deployment", "billing", "boto3", "vps"],
   "skills": "./skills",
-  "agents": "./agents",
   "commands": "./commands",
   "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json",
   "userConfig": {
     "aws_profile": {
       "type": "string",
+      "title": "AWS CLI profile",
       "description": "AWS CLI profile to use. Run 'aws configure --profile <name>' first.",
       "default": "default"
     },
     "default_region": {
       "type": "string",
+      "title": "Default AWS region",
       "description": "Default AWS region for new resources (e.g., us-east-1, eu-west-1).",
       "default": "us-east-1"
     },
     "mode": {
       "type": "string",
+      "title": "Operation mode",
       "description": "Operation mode: 'read-only' (no writes), 'dry-run' (plan only), or 'execute' (apply changes).",
       "default": "dry-run"
     },
     "monthly_budget_usd": {
       "type": "number",
+      "title": "Monthly budget (USD)",
       "description": "Monthly budget cap in USD. The pilot will warn when approaching this and refuse provisioning that would exceed it.",
       "default": 50
     },
     "require_confirm_destructive": {
       "type": "boolean",
+      "title": "Confirm destructive ops",
       "description": "If true, terminate/delete/drop ops require explicit yes from user via hook.",
       "default": true
     },
     "audit_log": {
       "type": "string",
+      "title": "Audit log path",
       "description": "Path to JSONL audit log of every AWS API call.",
       "default": "${CLAUDE_PLUGIN_DATA}/audit.jsonl"
     },
     "mcp_remote_url": {
       "type": "string",
+      "title": "Remote MCP URL",
       "description": "URL of the AWS-pilot MCP server hosted on a VPS (leave blank to run locally via stdio).",
       "default": ""
     },
     "mcp_auth_token": {
       "type": "string",
+      "title": "Remote MCP auth token",
       "description": "Bearer token for the remote MCP (only used if mcp_remote_url is set).",
       "sensitive": true,
       "default": ""

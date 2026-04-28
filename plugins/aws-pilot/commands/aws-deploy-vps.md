@@ -1,6 +1,6 @@
 ---
-description: Provision a VPS-style EC2 with SSH key, Docker installed, optional domain + TLS. Asks for purpose (general/web/db) and name.
-argument-hint: [name] [purpose: general|web|db] [domain?]
+description: 'Provision a VPS-style EC2 with SSH key, Docker installed, optional domain + TLS. Asks for purpose (general/web/db) and name.'
+argument-hint: '[name] [purpose: general|web|db] [domain?]'
 ---
 
 Run the **aws-deploy-vps** skill end-to-end:
