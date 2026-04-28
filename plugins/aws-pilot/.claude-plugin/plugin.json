@@ -12,8 +12,6 @@
   "keywords": ["aws", "cloud", "ec2", "s3", "lambda", "iam", "deployment", "billing", "boto3", "vps"],
   "skills": "./skills",
   "commands": "./commands",
-  "hooks": "./hooks/hooks.json",
-  "mcpServers": "./.mcp.json",
   "userConfig": {
     "aws_profile": {
       "type": "string",

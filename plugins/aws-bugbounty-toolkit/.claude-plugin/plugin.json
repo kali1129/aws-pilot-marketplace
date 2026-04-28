@@ -9,7 +9,6 @@
   "license": "MIT",
   "keywords": ["aws", "bug-bounty", "pentest", "iam-enum", "s3-recon", "boto3", "pacu"],
   "skills": "./skills",
-  "hooks": "./hooks/hooks.json",
   "userConfig": {
     "aws_profile": {
       "type": "string",
