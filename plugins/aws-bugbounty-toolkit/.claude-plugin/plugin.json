@@ -1,0 +1,41 @@
+{
+  "$schema": "https://code.claude.com/schemas/plugin.json",
+  "name": "aws-bb-toolkit",
+  "version": "0.1.0",
+  "description": "Offensive AWS recon and exploitation for authorized bug bounty programs. Atomic skills: aws-iam-enum, aws-s3-recon, aws-secrets-hunt, aws-lambda-recon, aws-ec2-imds-abuse, aws-cred-validator, aws-cloudtrail-pivot. Read-only by design — never modifies the target.",
+  "author": { "name": "kali1129" },
+  "homepage": "https://github.com/kali1129/aws-pilot-marketplace",
+  "repository": "https://github.com/kali1129/aws-pilot-marketplace",
+  "license": "MIT",
+  "keywords": ["aws", "bug-bounty", "pentest", "iam-enum", "s3-recon", "boto3", "pacu"],
+  "skills": "./skills",
+  "agents": "./agents",
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "aws_profile": {
+      "type": "string",
+      "description": "AWS CLI profile with the target program's authorized credentials.",
+      "default": "default"
+    },
+    "scope_file": {
+      "type": "file",
+      "description": "Path to a file listing in-scope AWS account IDs / ARN patterns. The toolkit refuses to enumerate anything outside this file.",
+      "default": ""
+    },
+    "throttle_seconds": {
+      "type": "number",
+      "description": "Minimum seconds between AWS API calls (avoid CloudTrail anomaly detection).",
+      "default": 3
+    },
+    "max_calls_per_session": {
+      "type": "number",
+      "description": "Hard cap on AWS calls per session.",
+      "default": 200
+    },
+    "findings_log": {
+      "type": "string",
+      "description": "JSONL findings log path.",
+      "default": "${CLAUDE_PLUGIN_DATA}/findings.jsonl"
+    }
+  }
+}

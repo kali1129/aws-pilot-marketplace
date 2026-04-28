@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+*.pem
+*.key
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.python-version
+venv/
+.venv/
+node_modules/
+
+# Plugin runtime data (never commit user creds/audit)
+**/data/
+audit.jsonl
+findings.jsonl

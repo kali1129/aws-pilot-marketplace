@@ -1,0 +1,22 @@
+# Force LF line endings on all text files in the repo, regardless of OS.
+* text=auto eol=lf
+
+# Shell scripts MUST be LF (bash on Linux/macOS fails on CRLF)
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Python, JSON, YAML
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+
+# Dockerfile
+Dockerfile text eol=lf
+
+# Binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.zip binary
