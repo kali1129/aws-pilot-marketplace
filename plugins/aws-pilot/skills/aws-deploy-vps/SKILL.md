@@ -12,7 +12,7 @@ Composite skill that wraps `aws-ec2-manage` with sensible production defaults. O
 - AMI: latest Amazon Linux 2023 (or Ubuntu 22.04 if user prefers apt)
 - Type: `t3.small` (2 vCPU, 2GB RAM, $15.18/mo)
 - Disk: 16GB gp3
-- Region: `${user_config.default_region}`
+- Region: `${AWS_REGION:-us-east-1}`
 - Security group: SSH(22) from user IP, HTTPS(443) from anywhere if web; HTTP(80) only for cert challenges
 - User-data script (cloud-init): updates, installs docker + docker-compose, creates swap, installs nginx if web=true
 

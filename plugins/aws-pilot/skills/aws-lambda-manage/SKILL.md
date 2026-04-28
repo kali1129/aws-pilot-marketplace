@@ -20,7 +20,7 @@ aws logs tail /aws/lambda/<name> --follow
 
 ```bash
 F=hello-world
-REGION=${user_config.default_region}
+REGION=${AWS_REGION:-us-east-1}
 
 # Step 1: Create execution role (if doesn't exist)
 ROLE=lambda-${F}-role

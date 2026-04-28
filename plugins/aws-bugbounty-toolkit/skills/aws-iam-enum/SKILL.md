@@ -9,9 +9,9 @@ Atomic skill: enumerate IAM via boto3/aws-cli. Read-only.
 
 ## Pre-flight (mandatory)
 
-1. Verify program scope explicitly includes AWS infra (read `${user_config.scope_file}`).
+1. Verify program scope explicitly includes AWS infra (read the configured scope_file path (set via /plugin config aws-bb-toolkit scope_file=...)).
 2. Confirm the credentials profile is the program's leaked/authorized creds, not your personal AWS.
-3. Throttle to `${user_config.throttle_seconds}` between calls (default 3s).
+3. Throttle to the configured throttle_seconds (default 3) between calls (default 3s).
 
 ## Commands
 
@@ -54,7 +54,7 @@ aws iam list-role-policies --role-name <r>
 
 ## Output
 
-Save findings to `${user_config.findings_log}` as JSONL:
+Save findings to the configured findings_log path as JSONL:
 ```json
 {"ts":"2026-04-28T...","skill":"aws-iam-enum","principal":"arn:aws:iam::123:user/x","permissions":["iam:*"],"privesc_paths":["CreateAccessKey on AdminUser"]}
 ```
@@ -63,5 +63,5 @@ Save findings to `${user_config.findings_log}` as JSONL:
 
 - NEVER call any iam:Create*/Update*/Delete*/Put* — read-only only
 - If you hit `AccessDenied`, log and move on — do not retry
-- Stop at `${user_config.max_calls_per_session}` (default 200)
+- Stop at the configured max_calls_per_session (default 200)
 - If response includes IPs/account IDs of the program owner, redact in chat output

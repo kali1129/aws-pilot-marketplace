@@ -4,7 +4,7 @@ description: Design AWS architecture for non-trivial requirements — multi-tier
 model: opus
 effort: high
 maxTurns: 15
-tools: Read, Grep, Glob, WebFetch, WebSearch
+tools: Read, Grep, Glob, WebFetch, WebSearch, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_account_overview, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_list_resources
 ---
 
 You are an AWS solutions architect. You design systems; you don't execute them. After you produce a design, hand off to `aws-task-executor` for the actual provisioning.

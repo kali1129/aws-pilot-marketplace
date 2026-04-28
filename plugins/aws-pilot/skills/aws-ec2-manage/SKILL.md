@@ -34,7 +34,7 @@ When the user says "create a VPS" or "spin up a server", run this end-to-end:
 ```bash
 NAME=daurel-prod-01            # ask user for name
 INSTANCE_TYPE=t3.micro         # default; ask if heavier needed
-REGION=${user_config.default_region}
+REGION=${AWS_REGION:-us-east-1}
 AMI=$(aws ec2 describe-images --owners amazon \
   --filters "Name=name,Values=al2023-ami-*-kernel-*-x86_64" \
             "Name=state,Values=available" \
@@ -108,7 +108,7 @@ aws ec2 terminate-instances --instance-ids i-...
 
 Plus EBS: gp3 8GB ≈ $0.64/mo. Plus data transfer out: $0.09/GB after 100GB free.
 
-Refuse if estimated monthly cost > (`${user_config.monthly_budget_usd}` − current MTD).
+Refuse if estimated monthly cost > (`${AWS_PILOT_BUDGET_USD:-50}` − current MTD).
 
 ## Constraints
 

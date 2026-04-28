@@ -12,7 +12,7 @@ You analyze AWS recon findings and produce report-ready output.
 ## Inputs
 
 - `findings.jsonl` from the recon runner
-- `${user_config.scope_file}` for scope context
+- the configured scope_file path (set via /plugin config aws-bb-toolkit scope_file=...) for scope context
 
 ## Process
 

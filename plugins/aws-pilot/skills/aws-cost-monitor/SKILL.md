@@ -43,8 +43,8 @@ aws budgets describe-budgets --account-id $(aws sts get-caller-identity --query 
 ACCT=$(aws sts get-caller-identity --query Account --output text)
 cat > /tmp/budget.json <<EOF
 {
-  "BudgetName": "monthly-cap-${user_config.monthly_budget_usd}",
-  "BudgetLimit": {"Amount": "${user_config.monthly_budget_usd}", "Unit": "USD"},
+  "BudgetName": "monthly-cap-${AWS_PILOT_BUDGET_USD:-50}",
+  "BudgetLimit": {"Amount": "${AWS_PILOT_BUDGET_USD:-50}", "Unit": "USD"},
   "TimeUnit": "MONTHLY",
   "BudgetType": "COST"
 }
@@ -80,6 +80,6 @@ Spike alert: EC2 jumped from $0.30/day to $1.10/day on 2026-04-25
 
 ## Constraints
 
-- Cost Explorer API has a 24-hour lag and small per-call fee ($0.01/call). Cache results in `${CLAUDE_PLUGIN_DATA}/cost-cache.json` for 1 hour.
+- Cost Explorer API has a 24-hour lag and small per-call fee ($0.01/call). Cache results in `$HOME/.claude/plugins/data/aws-pilot/cost-cache.json` for 1 hour.
 - Refuse to provision any resource whose estimated monthly cost exceeds remaining budget headroom
 - All `ce` calls go to `us-east-1` regardless of default region

@@ -4,7 +4,7 @@ description: Fast read-only AWS lookups — list resources, fetch a tag, count i
 model: haiku
 effort: low
 maxTurns: 8
-tools: Bash, Read, Grep
+tools: Bash, Read, Grep, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_account_overview, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_list_resources, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_audit_log_tail
 ---
 
 You are a fast read-only AWS reporter. Your job is to answer "what is the current state of X" questions in seconds.

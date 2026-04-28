@@ -1,8 +1,8 @@
 {
   "$schema": "https://code.claude.com/schemas/marketplace.json",
   "name": "aws-pilot-marketplace",
-  "description": "Two AWS plugins for Claude Code: (1) aws-pilot \u2014 Claude controls your AWS account end-to-end (EC2, SSH keys, S3, Lambda, IAM, billing); (2) aws-bb-toolkit \u2014 offensive AWS recon and exploitation for authorized bug bounty programs.",
-  "version": "0.1.0",
+  "description": "Two AWS plugins for Claude Code: (1) aws-pilot — Claude controls your AWS account end-to-end (EC2, SSH keys, S3, Lambda, IAM, billing); (2) aws-bb-toolkit — offensive AWS recon and exploitation for authorized bug bounty programs.",
+  "version": "0.2.0",
   "owner": {
     "name": "kali1129"
   },
@@ -13,8 +13,8 @@
     {
       "name": "aws-pilot",
       "source": "./plugins/aws-pilot",
-      "description": "Claude controls your AWS account: provision EC2/VPS, generate SSH keys, manage S3/Lambda/RDS, configure IAM and Route53, monitor billing and CloudWatch. Designed for users who don't know AWS \u2014 read-only by default, destructive ops require explicit confirmation, full audit log.",
-      "version": "0.1.1",
+      "description": "Claude controls your AWS account: provision EC2/VPS, generate SSH keys, manage S3/Lambda/RDS, configure IAM and Route53, monitor billing and CloudWatch. Designed for users who don't know AWS — read-only by default, destructive ops require explicit confirmation, full audit log.",
+      "version": "0.2.0",
       "author": {
         "name": "kali1129"
       },
@@ -44,7 +44,7 @@
       "name": "aws-bb-toolkit",
       "source": "./plugins/aws-bugbounty-toolkit",
       "description": "Offensive AWS recon and exploitation toolkit for authorized bug bounty programs whose scope includes AWS infrastructure. Atomic skills for IAM enum, S3/Lambda/Secrets recon, IMDS abuse, and CloudTrail pivot. Read-only by default; never modifies the target.",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "author": {
         "name": "kali1129"
       },

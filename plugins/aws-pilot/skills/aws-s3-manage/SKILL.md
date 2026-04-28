@@ -22,7 +22,7 @@ aws s3api get-bucket-encryption --bucket <bucket>
 
 ```bash
 B=my-private-bucket-$(date +%s)
-REGION=${user_config.default_region}
+REGION=${AWS_REGION:-us-east-1}
 
 aws s3api create-bucket \
   --bucket $B \

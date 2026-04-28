@@ -1,8 +1,8 @@
 {
   "$schema": "https://code.claude.com/schemas/plugin.json",
   "name": "aws-bb-toolkit",
-  "version": "0.1.1",
-  "description": "Offensive AWS recon and exploitation for authorized bug bounty programs. Atomic skills: aws-iam-enum, aws-s3-recon, aws-secrets-hunt, aws-lambda-recon, aws-ec2-imds-abuse, aws-cred-validator, aws-cloudtrail-pivot. Read-only by design \u2014 never modifies the target.",
+  "version": "0.2.0",
+  "description": "Offensive AWS recon and exploitation for authorized bug bounty programs. Atomic skills: aws-iam-enum, aws-s3-recon, aws-secrets-hunt, aws-lambda-recon, aws-ec2-imds-abuse, aws-cred-validator, aws-cloudtrail-pivot. Read-only by design — never modifies the target.",
   "author": {
     "name": "kali1129"
   },
