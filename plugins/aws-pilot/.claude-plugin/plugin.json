@@ -1,7 +1,7 @@
 {
   "$schema": "https://code.claude.com/schemas/plugin.json",
   "name": "aws-pilot",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Lets Claude Code drive your AWS account end-to-end. Atomic skills per service (EC2, S3, Lambda, IAM, Route53, RDS, CloudWatch, Cost), model-aware sub-agents, and a boto3 MCP server (stdio for local dev, HTTP for VPS). Safety-first: read-only by default, destructive ops gated by hooks, full audit log.",
   "author": {
     "name": "kali1129"
@@ -46,7 +46,13 @@
       "type": "number",
       "title": "Monthly budget (USD)",
       "description": "Monthly budget cap in USD. The pilot will warn when approaching this and refuse provisioning that would exceed it.",
-      "default": 50
+      "default": 5
+    },
+    "free_tier_only": {
+      "type": "boolean",
+      "title": "Free Tier only (no paid services)",
+      "description": "If true, hooks block any AWS command that would leave the Free Tier — non-Free instance types, RDS, NAT Gateway, ALB, Elasticache, EKS, etc. Set to false ONLY if you explicitly accept paid services.",
+      "default": true
     },
     "require_confirm_destructive": {
       "type": "boolean",

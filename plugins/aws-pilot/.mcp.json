@@ -9,6 +9,7 @@
       "AWS_REGION": "${user_config.default_region}",
       "AWS_PILOT_MODE": "${user_config.mode}",
       "AWS_PILOT_BUDGET_USD": "${user_config.monthly_budget_usd}",
+      "AWS_PILOT_FREE_TIER_ONLY": "${user_config.free_tier_only}",
       "AWS_PILOT_AUDIT_LOG": "${user_config.audit_log}",
       "AWS_PILOT_REMOTE_URL": "${user_config.mcp_remote_url}",
       "AWS_PILOT_AUTH_TOKEN": "${user_config.mcp_auth_token}",

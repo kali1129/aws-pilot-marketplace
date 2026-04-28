@@ -1,0 +1,86 @@
+{
+  "$schema": "https://aws-pilot/free-tier-policy.json",
+  "version": "1.0.0",
+  "description": "AWS Free Tier policy — what aws-pilot is allowed to provision when AWS_PILOT_FREE_TIER_ONLY=true.",
+  "notes": [
+    "Free Tier has THREE flavors: 12-month free (first year only), Always Free, and Trials.",
+    "This policy enforces the 12-month + Always Free overlap so users never pay if they stay within limits.",
+    "All Trials are excluded by default (they expire and start charging without warning).",
+    "Cost Explorer + Budgets API ($0.01/call) is allowed — needed for visibility."
+  ],
+  "allowed_services": {
+    "ec2": {
+      "instance_types_12mo_free": ["t2.micro", "t3.micro"],
+      "instance_types_always_free": [],
+      "max_running_hours_per_month": 750,
+      "ebs": {"types": ["gp2", "gp3"], "max_gb_total": 30},
+      "data_transfer_out_gb_per_month": 100,
+      "elastic_ips": "0 (released when not attached; charged when unused)"
+    },
+    "s3": {
+      "max_storage_gb": 5,
+      "max_get_requests_per_month": 20000,
+      "max_put_requests_per_month": 2000,
+      "data_transfer_out_gb_per_month": 100
+    },
+    "lambda": {
+      "always_free": true,
+      "max_requests_per_month": 1000000,
+      "max_compute_seconds_per_month": 400000
+    },
+    "cloudwatch": {
+      "always_free_metrics": 10,
+      "always_free_alarms": 10,
+      "logs_gb_ingested_per_month": 5,
+      "logs_storage_gb": 5
+    },
+    "iam": {"always_free": true},
+    "secrets_manager_free_for_30_days": false,
+    "ssm_parameter_store": {"standard_tier_always_free": true},
+    "route53": {
+      "warning": "$0.50/mo per hosted zone — NOT free, but explicitly allowed for $0.50/mo personal use.",
+      "max_hosted_zones": 1
+    },
+    "cloudfront": {
+      "always_free_data_transfer_out_gb_per_month": 50,
+      "always_free_requests_per_month": 2000000
+    },
+    "sns": {"always_free_email_per_month": 1000, "always_free_publishes_per_month": 1000000},
+    "sqs": {"always_free_requests_per_month": 1000000}
+  },
+  "blocked_services_default": {
+    "comment": "These services have no free tier OR are extremely easy to leave running and rack up charges.",
+    "items": [
+      {"service": "ec2", "what": "instance-types other than t2.micro / t3.micro", "why": "any larger type = $0.02-2.00/hr"},
+      {"service": "ec2", "what": "Elastic IP not attached", "why": "$3.65/mo per unattached EIP"},
+      {"service": "ec2", "what": "NAT Gateway", "why": "$32.40/mo + $0.045/GB processed (no free tier)"},
+      {"service": "elasticloadbalancing", "what": "ALB / NLB / Classic LB", "why": "$16-22/mo each, no free tier"},
+      {"service": "rds", "what": "any DB instance", "why": "Free tier = db.t2.micro 750h, but ALWAYS confirm explicitly — 12mo only"},
+      {"service": "rds", "what": "Multi-AZ", "why": "doubles cost"},
+      {"service": "elasticache", "what": "any cache cluster", "why": "no free tier (12mo expires)"},
+      {"service": "eks", "what": "EKS cluster", "why": "$72/mo control plane, no free tier"},
+      {"service": "fargate", "what": "Fargate tasks", "why": "no free tier"},
+      {"service": "directconnect", "what": "any", "why": "$216+/mo per connection"},
+      {"service": "vpn", "what": "Site-to-Site VPN", "why": "$36/mo per connection"},
+      {"service": "kms", "what": "customer-managed CMKs", "why": "$1/mo per CMK; AWS-managed keys are free"},
+      {"service": "secretsmanager", "what": "secrets", "why": "$0.40/mo per secret + $0.05/10k API calls (use SSM Parameter Store instead)"},
+      {"service": "config", "what": "AWS Config", "why": "$0.003 per resource recorded — fine tail risk"},
+      {"service": "cloudtrail", "what": "additional trails", "why": "first trail is free; any 2nd trail is $2/100k events"},
+      {"service": "guardduty", "what": "any", "why": "no free tier (trial only)"},
+      {"service": "shield", "what": "Shield Advanced", "why": "$3000/mo flat"},
+      {"service": "directorservice", "what": "any", "why": "$0.05-0.20/hr"},
+      {"service": "workspaces", "what": "any", "why": "$25-75/mo per user"},
+      {"service": "sagemaker", "what": "any non-Studio", "why": "instance hours add up fast"}
+    ]
+  },
+  "spend_caps": {
+    "max_instance_hourly_cost_usd": 0.0117,
+    "comment_max_hourly": "$0.0117/hr = t3.micro on-demand. Anything pricier requires explicit override.",
+    "max_monthly_estimate_usd": 5,
+    "comment_monthly": "Cap of $5/mo combined estimate across all aws-pilot-managed resources. Refuse if going over."
+  },
+  "override": {
+    "how": "User must explicitly say 'I accept the cost' AND set: /plugin config aws-pilot free_tier_only=false",
+    "default": "true (Free Tier enforced)"
+  }
+}

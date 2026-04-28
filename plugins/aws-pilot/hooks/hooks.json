@@ -17,6 +17,10 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/destructive-guard.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/free-tier-guard.sh\""
           }
         ]
       }
