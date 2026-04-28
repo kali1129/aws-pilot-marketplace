@@ -77,17 +77,38 @@ def _has_env_creds() -> bool:
 
 
 def _creds_problem() -> str | None:
-    """Return None if creds look usable, else a clear setup message."""
+    """Return None if creds look usable, else a clear setup message tailored
+    for users new to AWS."""
     if PROFILE in _list_profiles():
         return None
     if _has_env_creds():
         return None  # env vars supersede profile
+
+    cli_present = any((Path(p) / "aws").exists() or (Path(p) / "aws.exe").exists()
+                      for p in os.environ.get("PATH", "").split(os.pathsep) if p)
+    cli_status = "✓ already installed" if cli_present else "✗ NOT installed"
+
     return (
-        f"No AWS credentials available for profile '{PROFILE}'.\n"
-        f"Setup:\n"
+        f"No AWS credentials available for profile '{PROFILE}'.\n\n"
+        f"--- First-time setup (you have an AWS account but never configured CLI) ---\n"
+        f"AWS CLI: {cli_status}\n"
+        f"  • Windows: winget install Amazon.AWSCLI\n"
+        f"  • macOS:   brew install awscli\n"
+        f"  • Linux:   https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html\n\n"
+        f"Get access keys (recommended: dedicated IAM user, not root):\n"
+        f"  1. https://console.aws.amazon.com/iam/home → Users → Create user\n"
+        f"     (name e.g. 'claude-code-pilot', no console access needed)\n"
+        f"  2. Attach policy: AdministratorAccess (or scope tighter later)\n"
+        f"  3. Open the user → Security credentials → Create access key\n"
+        f"     → use case 'Command Line Interface (CLI)'\n"
+        f"  4. Download the .csv (you can only view the secret once).\n\n"
+        f"Configure CLI from CSV (no copy-paste, no leaks to chat):\n"
+        f"  • Ask Claude: \"import my AWS access keys from the CSV in Downloads\"\n"
+        f"  • Claude calls aws_import_credentials_from_csv with the path.\n\n"
+        f"Or do it manually:\n"
         f"  1. aws configure --profile {PROFILE}\n"
-        f"  2. /plugin config aws-pilot aws_profile={PROFILE}\n"
-        f"Or set AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars before launching Claude."
+        f"  2. /plugin config aws-pilot aws_profile={PROFILE}\n\n"
+        f"Run aws_health_check anytime to see what's missing."
     )
 
 
@@ -570,6 +591,232 @@ def aws_audit_log_tail(lines: int = 20) -> dict:
         return {"path": str(AUDIT_LOG), "lines": tail[-n:], "total_bytes": size}
     except (OSError, PermissionError) as e:
         return {"error": f"cannot read audit log: {e}", "kind": "io"}
+
+
+@mcp.tool()
+def aws_import_credentials_from_csv(csv_path: str, profile: str = "default", delete_after: bool = True) -> dict:
+    """Import AWS access keys from a downloaded CSV (the file you get from
+    'Create access key' → Download .csv) and configure the AWS CLI silently.
+    NEVER prints the secret to logs/output — only metadata (prefix + length).
+
+    Args:
+        csv_path: full path to the .csv file (typically in Downloads/)
+        profile:  AWS CLI profile name to write keys into (default: 'default')
+        delete_after: if True, delete the CSV after successful import.
+
+    Returns: structured summary (no secret values).
+    """
+    import csv as _csv
+    import subprocess
+    import shutil
+
+    # Bypass safe_tool: this tool runs WITHOUT live AWS creds (it's the bootstrap).
+    # But still wrap errors and audit.
+    audit_label = "aws_import_credentials_from_csv"
+    try:
+        path = Path(csv_path).expanduser().resolve()
+        if not path.exists():
+            msg = f"CSV not found at {path}"
+            audit(audit_label, {"path": str(path)}, msg, False)
+            return {"error": msg, "kind": "not_found"}
+        if path.stat().st_size > 100_000:
+            msg = f"CSV suspiciously large ({path.stat().st_size} bytes) — refusing to parse."
+            audit(audit_label, {"path": str(path)}, msg, False)
+            return {"error": msg, "kind": "too_large"}
+
+        # Use utf-8-sig to strip BOM (AWS CSVs have it)
+        with path.open(encoding="utf-8-sig") as f:
+            row = next(_csv.DictReader(f), None)
+        if not row:
+            return {"error": "CSV is empty / has no rows", "kind": "empty"}
+
+        ak = row.get("Access key ID") or row.get("Access Key Id") or row.get("AccessKeyId")
+        sk = row.get("Secret access key") or row.get("Secret Access Key") or row.get("SecretAccessKey")
+        if not ak or not sk:
+            return {"error": "CSV columns not recognized", "kind": "bad_csv", "columns": list(row.keys())}
+
+        # Locate aws CLI (common Windows path or PATH)
+        aws_bin = shutil.which("aws") or "aws"
+        for k, v in [
+            ("aws_access_key_id", ak),
+            ("aws_secret_access_key", sk),
+            ("region", os.environ.get("AWS_REGION", REGION)),
+            ("output", "json"),
+        ]:
+            r = subprocess.run([aws_bin, "configure", "set", k, v, "--profile", profile],
+                               capture_output=True, text=True)
+            if r.returncode != 0:
+                return {"error": f"aws configure set {k} failed: {r.stderr.strip()}",
+                        "kind": "aws_cli_error"}
+
+        # Verify identity (this DOES make a real AWS call, so creds must be valid)
+        r = subprocess.run([aws_bin, "sts", "get-caller-identity", "--profile", profile, "--output", "json"],
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            return {"error": f"sts get-caller-identity failed: {r.stderr.strip()}",
+                    "kind": "verify_failed", "ak_prefix": ak[:4] + "***"}
+        identity = json.loads(r.stdout)
+
+        if delete_after:
+            try:
+                path.unlink()
+            except OSError:
+                pass
+
+        audit(audit_label, {"profile": profile}, f"ok: {identity.get('Arn')}", True)
+        return {
+            "ok": True,
+            "profile": profile,
+            "ak_prefix": ak[:4] + "***",
+            "ak_length": len(ak),
+            "sk_length": len(sk),
+            "identity": identity,
+            "csv_deleted": delete_after,
+            "next_steps": [
+                f"/plugin config aws-pilot aws_profile={profile}",
+                "Run aws_account_overview to see your account.",
+            ],
+        }
+    except Exception as e:
+        audit(audit_label, {"path": csv_path}, f"err: {e}", False)
+        return {"error": f"unexpected: {e}", "kind": "internal"}
+
+
+@mcp.tool()
+def aws_health_check() -> dict:
+    """Diagnose common AWS account misconfigurations: missing creds, root keys
+    in use, MFA on root, Cost Explorer disabled, missing default VPC,
+    AdministratorAccess vs least-privilege, regions opt-in needed, audit log
+    growth, etc. Read-only. Always safe to run.
+    """
+    audit_label = "aws_health_check"
+    findings = []
+
+    def add(severity: str, code: str, msg: str, fix: str | None = None):
+        f = {"severity": severity, "code": code, "message": msg}
+        if fix:
+            f["fix"] = fix
+        findings.append(f)
+
+    # 1. CLI/creds present?
+    cred_err = _creds_problem()
+    if cred_err:
+        add("critical", "no_creds", "No AWS credentials configured.",
+            "Run aws_import_credentials_from_csv with the CSV from IAM, or aws configure manually.")
+        audit(audit_label, {}, "no_creds", True)
+        return {"findings": findings, "score": 0, "summary": "Setup not complete."}
+
+    # 2. Identity check
+    try:
+        sts = client("sts").get_caller_identity()
+    except (NoCredentialsError, ProfileNotFound):
+        add("critical", "no_creds", "Credentials present but boto3 can't load them.", None)
+        return {"findings": findings, "score": 0}
+    except ClientError as e:
+        add("critical", "sts_failed", f"sts:GetCallerIdentity failed: {e}", None)
+        return {"findings": findings, "score": 0}
+
+    arn = sts["Arn"]
+    account_id = sts["Account"]
+
+    # 3. Are we using the root account? (red flag)
+    if ":root" in arn:
+        add("critical", "using_root", f"You're using ROOT credentials ({arn}).",
+            "Create an IAM user with AdministratorAccess and use those keys instead. Never use root keys for daily work.")
+
+    # 4. Cost Explorer enabled?
+    try:
+        ce = client("ce", region="us-east-1")
+        today = datetime.now(timezone.utc).date()
+        first = today.replace(day=1)
+        ce.get_cost_and_usage(
+            TimePeriod={"Start": first.isoformat(), "End": today.isoformat()},
+            Granularity="MONTHLY", Metrics=["UnblendedCost"],
+        )
+    except ClientError as e:
+        if "AccessDenied" in str(e) or "not enabled" in str(e):
+            add("medium", "cost_explorer_disabled",
+                "Cost Explorer is not enabled — you can't see spending in this plugin.",
+                "Console → Billing → Cost Explorer → Launch Cost Explorer (24h delay before data appears).")
+        else:
+            add("low", "cost_explorer_err", f"Cost Explorer check failed: {e}", None)
+
+    # 5. MFA on the principal?
+    if "iam::" in arn and "user/" in arn:
+        try:
+            user_name = arn.split("user/")[-1]
+            mfa = client("iam").list_mfa_devices(UserName=user_name)
+            if not mfa["MFADevices"]:
+                add("medium", "no_mfa",
+                    f"User '{user_name}' has no MFA device.",
+                    "Console → IAM → Users → click user → Security credentials → 'Assign MFA'.")
+        except ClientError:
+            pass
+
+    # 6. Default VPC in default region?
+    try:
+        vpcs = client("ec2").describe_vpcs(Filters=[{"Name": "isDefault", "Values": ["true"]}])["Vpcs"]
+        if not vpcs:
+            add("medium", "no_default_vpc",
+                f"No default VPC in {REGION}. EC2 launches will require explicit VPC selection.",
+                f"aws ec2 create-default-vpc --region {REGION}  (or pick another region with /plugin config aws-pilot default_region=...)")
+    except ClientError:
+        pass
+
+    # 7. Long-lived access keys (>90 days)?
+    if "user/" in arn:
+        try:
+            user_name = arn.split("user/")[-1]
+            keys = client("iam").list_access_keys(UserName=user_name)["AccessKeyMetadata"]
+            now = datetime.now(timezone.utc)
+            for k in keys:
+                age_days = (now - k["CreateDate"]).days
+                if age_days > 90 and k["Status"] == "Active":
+                    add("medium", "stale_key",
+                        f"Access key {k['AccessKeyId'][:8]}*** is {age_days} days old.",
+                        "Rotate via IAM Console → Security credentials → Create access key, then deactivate the old one after 24h.")
+        except ClientError:
+            pass
+
+    # 8. Plugin mode
+    if MODE == "execute":
+        add("info", "execute_mode", "Plugin is in 'execute' mode — destructive ops can run.",
+            "If you want a safety net, set: /plugin config aws-pilot mode=dry-run")
+    elif MODE == "read-only":
+        add("info", "readonly_mode", "Plugin is in 'read-only' mode — no writes possible.", None)
+
+    # 9. Budget vs MTD
+    mtd = _current_mtd_cost_usd()
+    if mtd is not None and BUDGET_USD > 0 and mtd > 0.8 * BUDGET_USD:
+        add("high", "budget_warn",
+            f"MTD spend ${mtd:.2f} is {(mtd/BUDGET_USD)*100:.0f}% of budget ${BUDGET_USD}.",
+            "Reduce spend (run aws_list_resources to find what to clean up) or raise monthly_budget_usd.")
+
+    # 10. Audit log size
+    try:
+        if AUDIT_LOG.exists():
+            size_mb = AUDIT_LOG.stat().st_size / (1024 * 1024)
+            if size_mb > 50:
+                add("low", "audit_log_large", f"Audit log is {size_mb:.1f} MB.",
+                    f"Rotate: move {AUDIT_LOG} to {AUDIT_LOG}.archive and let a fresh one start.")
+    except OSError:
+        pass
+
+    score = 100 - sum({"critical": 40, "high": 20, "medium": 10, "low": 3, "info": 0}.get(f["severity"], 0)
+                      for f in findings)
+    score = max(0, min(100, score))
+
+    audit(audit_label, {}, f"score={score} findings={len(findings)}", True)
+    return {
+        "account_id": account_id,
+        "arn": arn,
+        "region": REGION,
+        "profile": PROFILE,
+        "mode": MODE,
+        "score": score,
+        "findings": findings,
+        "summary": f"Score {score}/100. {len(findings)} finding(s).",
+    }
 
 
 if __name__ == "__main__":

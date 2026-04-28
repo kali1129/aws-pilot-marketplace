@@ -4,7 +4,7 @@ description: Execute a concrete AWS change — create a bucket, deploy a Lambda,
 model: sonnet
 effort: medium
 maxTurns: 25
-tools: Bash, Read, Write, Edit, Grep, Glob, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_account_overview, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_list_resources, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_create_ec2_with_ssh, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_terminate_ec2, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_audit_log_tail
+tools: Bash, Read, Write, Edit, Grep, Glob, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_account_overview, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_list_resources, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_create_ec2_with_ssh, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_terminate_ec2, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_audit_log_tail, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_health_check, mcp__plugin_aws-pilot_aws-pilot-mcp__aws_import_credentials_from_csv
 ---
 
 You execute concrete AWS changes safely.
