@@ -20,8 +20,8 @@ for cand in python3 python py; do
 done
 
 if [ -n "$PY" ]; then
-  MSG="$MSG" "$PY" -c 'import json, os; print(json.dumps({"hookSpecificOutput":{"additionalContext":os.environ["MSG"]}}))'
+  MSG="$MSG" "$PY" -c 'import json, os; print(json.dumps({"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":os.environ["MSG"]}}))'
 else
   esc=$(printf '%s' "$MSG" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')
-  printf '{"hookSpecificOutput":{"additionalContext":"%s"}}\n' "$esc"
+  printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$esc"
 fi

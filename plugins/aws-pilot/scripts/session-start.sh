@@ -17,12 +17,12 @@ emit() {
   # Emit hook output JSON. If Python available use it; else use heredoc with manual JSON escape.
   local msg="$1"
   if [ -n "$PY" ]; then
-    MSG="$msg" "$PY" -c 'import json, os; print(json.dumps({"hookSpecificOutput": {"additionalContext": os.environ["MSG"]}}))'
+    MSG="$msg" "$PY" -c 'import json, os; print(json.dumps({"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": os.environ["MSG"]}}))'
   else
     # naive escape: backslash, double-quote, newline
     local esc
     esc=$(printf '%s' "$msg" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g')
-    printf '{"hookSpecificOutput":{"additionalContext":"%s"}}\n' "$esc"
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$esc"
   fi
 }
 
